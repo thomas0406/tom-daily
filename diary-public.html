@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>📔 Diary Tom</title>
+  <style>
+    :root {
+      --bg-1: #04040b;
+      --bg-2: #00122a;
+      --accent: #00e5ff;
+      --accent2: #ff00d0;
+      --text: #e6f7ff;
+      --muted: #8fa3b3;
+    }
+
+    * { box-sizing: border-box; }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      color: var(--text);
+      min-height: 100vh;
+      background-attachment: fixed;
+    }
+
+    #bgCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 50px;
+      animation: fadeIn 0.8s ease-in;
+    }
+
+    .neon-title {
+      font-size: 2.5em;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+      letter-spacing: 1px;
+      color: var(--text);
+      text-shadow: 0 0 6px rgba(255,255,255,0.10),
+                   0 0 14px rgba(0,229,255,0.14),
+                   0 0 26px rgba(255,0,208,0.06);
+      filter: drop-shadow(0 0 12px rgba(0,229,255,0.18));
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.1em;
+      margin: 0;
+      font-weight: 300;
+      letter-spacing: 0.5px;
+    }
+
+    .divider {
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      margin: 30px 0;
+      opacity: 0.3;
+      border-radius: 1px;
+    }
+
+    .entries-container {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+
+    .entry {
+      background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(0,229,255,0.08);
+      border-radius: 15px;
+      padding: 30px;
+      backdrop-filter: blur(6px);
+      transition: all 0.3s ease;
+      animation: slideIn 0.6s ease-out backwards;
+    }
+
+    .entry:hover {
+      border-color: rgba(0,229,255,0.15);
+      box-shadow: 0 10px 40px rgba(0,229,255,0.08),
+                  0 0 20px rgba(255,0,208,0.04),
+                  inset 0 0 0 1px rgba(0,229,255,0.05);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .entry:nth-child(1) { animation-delay: 0.1s; }
+    .entry:nth-child(2) { animation-delay: 0.2s; }
+    .entry:nth-child(3) { animation-delay: 0.3s; }
+
+    .entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 15px;
+      gap: 15px;
+    }
+
+    .entry-title {
+      font-size: 1.5em;
+      font-weight: 600;
+      margin: 0;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .entry-date {
+      color: var(--accent);
+      font-weight: 500;
+      font-size: 0.95em;
+      white-space: nowrap;
+      padding: 5px 12px;
+      background: rgba(0,229,255,0.08);
+      border-radius: 20px;
+      border: 1px solid rgba(0,229,255,0.1);
+    }
+
+    .entry-content {
+      color: rgba(230,247,255,0.85);
+      line-height: 1.7;
+      font-size: 1em;
+      margin: 15px 0 0 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .entry-audio {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(0,229,255,0.1);
+    }
+
+    .audio-label {
+      color: var(--muted);
+      font-size: 0.85em;
+      margin-bottom: 10px;
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 10px;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .empty-icon {
+      font-size: 3em;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+
+    .empty-text {
+      font-size: 1.2em;
+      margin: 0;
+      opacity: 0.7;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(0,229,255,0.1);
+      color: var(--muted);
+      font-size: 0.9em;
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(0,229,255,0.1);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75em;
+      margin-top: 10px;
+      border: 1px solid rgba(0,229,255,0.2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    @media(max-width:1024px) {
+      .container {
+        padding: 30px 16px;
+      }
+    }
+
+    @media(max-width:768px) {
+      html { font-size: 14px; }
+      .container {
+        padding: 20px 12px;
+      }
+
+      .neon-title {
+        font-size: 1.6em;
+        margin-bottom: 5px;
+      }
+
+      .subtitle {
+        font-size: 0.95em;
+      }
+
+      header {
+        margin-bottom: 30px;
+      }
+
+      .divider {
+        margin: 20px 0;
+      }
+
+      .entries-container {
+        gap: 18px;
+      }
+
+      .entry {
+        padding: 18px;
+        border-radius: 12px;
+      }
+
+      .entry-header {
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .entry-title {
+        font-size: 1.25em;
+        line-height: 1.3;
+      }
+
+      .entry-date {
+        font-size: 0.9em;
+        padding: 6px 10px;
+      }
+
+      .entry-content {
+        font-size: 0.95em;
+        line-height: 1.6;
+        margin-top: 12px;
+      }
+
+      .entry-audio {
+        margin-top: 15px;
+        padding-top: 15px;
+      }
+
+      audio {
+        margin-top: 8px;
+        border-radius: 6px;
+      }
+
+      .badge {
+        padding: 5px 10px;
+        font-size: 0.7em;
+        margin-top: 8px;
+      }
+
+      footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        font-size: 0.85em;
+      }
+    }
+
+    @media(max-width:480px) {
+      html { font-size: 13px; }
+      .container {
+        padding: 16px 10px;
+      }
+
+      .neon-title {
+        font-size: 1.4em;
+      }
+
+      .subtitle {
+        font-size: 0.9em;
+      }
+
+      .entry {
+        padding: 15px;
+        margin-bottom: 5px;
+      }
+
+      .entry-title {
+        font-size: 1.1em;
+      }
+
+      .entry-content {
+        font-size: 0.9em;
+        line-height: 1.5;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  
+  <div class="container">
+    <header>
+      <h1 class="neon-title">📔 DIARY</h1>
+      <p class="subtitle">Kumpulan cerita dan kehidupan</p>
+    </header>
+
+    <div class="divider"></div>
+
+    <div class="entries-container" id="entriesContainer">
+      <!-- Entries akan dimuat di sini -->
+    </div>
+
+    <footer>
+      <p>&copy; 2026 - Diary Tom ✨</p>
+    </footer>
+  </div>
+
+  <script>
+    const storageKey = 'diaryEntries_v1';
+    let diaryEntries = [];
+
+    // Load entries dari localStorage
+    try {
+      diaryEntries = JSON.parse(localStorage.getItem(storageKey)) || [];
+    } catch(e) {
+      console.error('Error loading entries:', e);
+      diaryEntries = [];
+    }
+
+    const container = document.getElementById('entriesContainer');
+
+    if (diaryEntries.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <p class="empty-text">Belum ada entry diary</p>
+          <p style="color: var(--muted); margin-top: 10px; font-size: 0.9em;">
+            💡 Semua entries akan muncul di sini
+          </p>
+        </div>
+      `;
+    } else {
+      // Tampilkan entries dari yang terbaru
+      const sorted = [...diaryEntries].sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      sorted.forEach((entry, index) => {
+        const entryEl = document.createElement('div');
+        entryEl.className = 'entry';
+        
+        const dateObj = new Date(entry.date);
+        const formattedDate = dateObj.toLocaleDateString('id-ID', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        
+        let audioSection = '';
+        if (entry.audioUrl) {
+          audioSection = `
+            <div class="entry-audio">
+              <label class="audio-label">🎵 Audio</label>
+              <audio controls>
+                <source src="${escapeHtml(entry.audioUrl)}" type="audio/mpeg">
+                Browser Anda tidak mendukung audio player.
+              </audio>
+            </div>
+          `;
+        }
+        
+        entryEl.innerHTML = `
+          <div class="entry-header">
+            <h2 class="entry-title">${escapeHtml(entry.title)}</h2>
+            <span class="entry-date">${formattedDate}</span>
+          </div>
+          <p class="entry-content">${escapeHtml(entry.content)}</p>
+          <span class="badge">Baca Saja</span>
+          ${audioSection}
+        `;
+        
+        container.appendChild(entryEl);
+      });
+    }
+
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // ===== NEON BACKGROUND PARTICLES =====
+    (function(){
+      const canvas = document.getElementById('bgCanvas');
+      if(!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let W = 0, H = 0;
+      
+      function resize(){
+        W = canvas.width = innerWidth;
+        H = canvas.height = innerHeight;
+      }
+      
+      window.addEventListener('resize', resize);
+      resize();
+
+      const colors = ['#00e5ff','#ff00d0','#66fff0','#ff7ae8'];
+      const parts = [];
+      
+      class Particle {
+        constructor(){
+          this.reset(true);
+        }
+        
+        reset(init){
+          this.x = Math.random() * W;
+          this.y = Math.random() * H;
+          const dir = Math.random() * Math.PI * 2;
+          const speed = 0.2 + Math.random() * 0.6;
+          this.vx = Math.cos(dir) * speed;
+          this.vy = Math.sin(dir) * speed;
+          this.r = 2 + Math.random() * 8;
+          this.c = colors[Math.floor(Math.random() * colors.length)];
+          
+          if(!init){
+            if(Math.random() < 0.3){
+              this.x = Math.random() < 0.5 ? -50 : W + 50;
+            }
+            if(Math.random() < 0.3){
+              this.y = Math.random() < 0.5 ? -50 : H + 50;
+            }
+          }
+        }
+        
+        update(){
+          this.x += this.vx;
+          this.y += this.vy;
+          if(this.x < -80 || this.x > W + 80 || this.y < -80 || this.y > H + 80){
+            this.reset(false);
+          }
+        }
+        
+        draw(){
+          const grad = ctx.createRadialGradient(
+            this.x, this.y, 0,
+            this.x, this.y, this.r * 8
+          );
+          grad.addColorStop(0, this.c);
+          grad.addColorStop(0.18, this.c + '66');
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+          
+          ctx.fillStyle = grad;
+          ctx.fillRect(
+            this.x - this.r * 8,
+            this.y - this.r * 8,
+            this.r * 16,
+            this.r * 16
+          );
+        }
+      }
+
+      function initParticles(){
+        parts.length = 0;
+        const total = Math.max(40, Math.min(120, Math.floor((W * H) / 40000)));
+        for(let i = 0; i < total; i++){
+          parts.push(new Particle());
+        }
+      }
+
+      initParticles();
+
+      let mx = -9999, my = -9999;
+      window.addEventListener('mousemove', (e) => {
+        mx = e.clientX;
+        my = e.clientY;
+      });
+
+      function frame(){
+        ctx.clearRect(0, 0, W, H);
+        ctx.globalCompositeOperation = 'lighter';
+        
+        for(const p of parts){
+          if(mx > -1000){
+            const dx = (mx - p.x) * 0.0004;
+            const dy = (my - p.y) * 0.0004;
+            p.vx += dx;
+            p.vy += dy;
+          }
+          
+          p.vx *= 0.995;
+          p.vy *= 0.995;
+          p.update();
+          p.draw();
+        }
+        
+        ctx.globalCompositeOperation = 'source-over';
+        requestAnimationFrame(frame);
+      }
+      
+      frame();
+      
+      let reInitTimer;
+      window.addEventListener('resize', () => {
+        clearTimeout(reInitTimer);
+        reInitTimer = setTimeout(() => {
+          initParticles();
+        }, 250);
+      });
+    })();
+
+    console.log('✅ Diary Public Viewer (Read-Only)');
+    console.log('📊 Total entries:', diaryEntries.length);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>📔 Diary - Admin Panel</title>
+  <style>
+    :root {
+      --bg-1: #04040b;
+      --bg-2: #00122a;
+      --accent: #00e5ff;
+      --accent2: #ff00d0;
+      --text: #e6f7ff;
+      --muted: #8fa3b3;
+      --success: #00ff88;
+      --error: #ff6b6b;
+    }
+
+    * { box-sizing: border-box; }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      color: var(--text);
+      min-height: 100vh;
+      background-attachment: fixed;
+    }
+
+    #bgCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fadeIn 0.8s ease-in;
+    }
+
+    .neon-title {
+      font-size: 2.5em;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+      letter-spacing: 1px;
+      color: var(--text);
+      text-shadow: 0 0 6px rgba(255,255,255,0.10),
+                   0 0 14px rgba(0,229,255,0.14),
+                   0 0 26px rgba(255,0,208,0.06);
+      filter: drop-shadow(0 0 12px rgba(0,229,255,0.18));
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1em;
+      margin: 0;
+      font-weight: 300;
+      letter-spacing: 0.5px;
+    }
+
+    .admin-badge {
+      display: inline-block;
+      background: rgba(255,0,208,0.15);
+      color: var(--accent2);
+      padding: 5px 15px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,0,208,0.3);
+      font-size: 0.85em;
+      margin-left: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    // === FORM SECTION ===
+    .form-section {
+      background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(0,229,255,0.08);
+      border-radius: 15px;
+      padding: 30px;
+      backdrop-filter: blur(6px);
+    }
+
+    .form-title {
+      font-size: 1.3em;
+      font-weight: 600;
+      margin: 0 0 25px 0;
+      color: var(--text);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      color: var(--accent);
+      font-size: 0.9em;
+      font-weight: 500;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="url"],
+    input[type="file"],
+    textarea {
+      width: 100%;
+      padding: 12px 15px;
+      background: rgba(0,229,255,0.04);
+      border: 1px solid rgba(0,229,255,0.1);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 1em;
+      transition: all 0.3s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    input[type="url"]:focus,
+    input[type="file"]:focus,
+    textarea:focus {
+      outline: none;
+      background: rgba(0,229,255,0.08);
+      border-color: rgba(0,229,255,0.3);
+      box-shadow: 0 0 15px rgba(0,229,255,0.15);
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 25px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, var(--accent), #00c4e5);
+      border: none;
+      border-radius: 8px;
+      color: var(--bg-1);
+      font-weight: 600;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,229,255,0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, var(--accent2), #ff4db8);
+    }
+
+    .btn-secondary:hover {
+      box-shadow: 0 8px 20px rgba(255,0,208,0.3);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, var(--error), #ff4444);
+      flex: 0.5;
+    }
+
+    .btn-danger:hover {
+      box-shadow: 0 8px 20px rgba(255,107,107,0.3);
+    }
+
+    // === SIDEBAR / ENTRIES LIST ===
+    .entries-section {
+      background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(0,229,255,0.08);
+      border-radius: 15px;
+      padding: 30px;
+      backdrop-filter: blur(6px);
+      max-height: 800px;
+      overflow-y: auto;
+    }
+
+    .entries-title {
+      font-size: 1.3em;
+      font-weight: 600;
+      margin: 0 0 20px 0;
+      color: var(--text);
+    }
+
+    .entry-item {
+      padding: 15px;
+      background: rgba(0,229,255,0.05);
+      border: 1px solid rgba(0,229,255,0.1);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .entry-item:hover {
+      background: rgba(0,229,255,0.1);
+      border-color: rgba(0,229,255,0.2);
+      transform: translateX(5px);
+    }
+
+    .entry-item.active {
+      background: rgba(0,229,255,0.15);
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(0,229,255,0.2);
+    }
+
+    .entry-item-title {
+      font-weight: 500;
+      margin: 0 0 5px 0;
+      color: var(--text);
+      font-size: 0.95em;
+    }
+
+    .entry-item-date {
+      font-size: 0.8em;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .entry-item-btn {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .entry-item-btn button {
+      flex: 1;
+      padding: 6px 10px;
+      font-size: 0.8em;
+    }
+
+    // === STATS ===
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(0,229,255,0.08);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      backdrop-filter: blur(6px);
+    }
+
+    .stat-number {
+      font-size: 2em;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 0;
+    }
+
+    .stat-label {
+      font-size: 0.85em;
+      color: var(--muted);
+      margin: 8px 0 0 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    // === ACTIONS ===
+    .actions-section {
+      background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(0,229,255,0.08);
+      border-radius: 15px;
+      padding: 30px;
+      backdrop-filter: blur(6px);
+      margin-bottom: 30px;
+    }
+
+    .actions-title {
+      font-size: 1.1em;
+      font-weight: 600;
+      margin: 0 0 20px 0;
+      color: var(--text);
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .action-buttons button {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, rgba(0,229,255,0.2), transparent);
+      margin: 30px 0;
+    }
+
+    .alert {
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+      font-weight: 500;
+    }
+
+    .alert.success {
+      background: rgba(0,255,136,0.15);
+      border: 1px solid rgba(0,255,136,0.3);
+      color: var(--success);
+    }
+
+    .alert.error {
+      background: rgba(255,107,107,0.15);
+      border: 1px solid rgba(255,107,107,0.3);
+      color: var(--error);
+    }
+
+    .alert.show {
+      display: block;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @media(max-width:1024px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .entries-section {
+        max-height: 400px;
+      }
+    }
+
+    @media(max-width:768px) {
+      html { font-size: 14px; }
+      .container {
+        padding: 20px 12px;
+      }
+
+      .neon-title {
+        font-size: 1.6em;
+        margin-bottom: 5px;
+      }
+
+      .subtitle {
+        font-size: 0.95em;
+      }
+
+      .admin-badge {
+        display: block;
+        margin: 8px 0 0 0;
+        font-size: 0.75em;
+      }
+
+      .stats-grid {
+        gap: 12px;
+        margin-bottom: 25px;
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .stat-card {
+        padding: 15px;
+        border-radius: 10px;
+      }
+
+      .stat-number {
+        font-size: 1.6em;
+      }
+
+      .stat-label {
+        font-size: 0.8em;
+        margin-top: 5px;
+      }
+
+      .actions-section {
+        padding: 20px;
+        margin-bottom: 25px;
+      }
+
+      .actions-title {
+        font-size: 1.05em;
+        margin-bottom: 15px;
+      }
+
+      .action-buttons {
+        gap: 10px;
+      }
+
+      .action-buttons button {
+        min-width: 120px;
+        padding: 11px 15px;
+        font-size: 0.9em;
+      }
+
+      .form-section {
+        padding: 20px;
+      }
+
+      .form-title {
+        font-size: 1.25em;
+        margin-bottom: 20px;
+      }
+
+      .form-group {
+        margin-bottom: 18px;
+      }
+
+      label {
+        font-size: 0.85em;
+        margin-bottom: 6px;
+      }
+
+      input[type="text"],
+      input[type="date"],
+      input[type="url"],
+      input[type="file"],
+      textarea {
+        padding: 13px 12px;
+        font-size: 1em;
+        border-radius: 6px;
+      }
+
+      textarea {
+        min-height: 100px;
+      }
+
+      button {
+        padding: 13px 15px;
+        font-size: 0.95em;
+        border-radius: 6px;
+        min-height: 48px;
+      }
+
+      .button-group {
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .entries-section {
+        padding: 20px;
+        max-height: 350px;
+      }
+
+      .entries-title {
+        font-size: 1.25em;
+        margin-bottom: 18px;
+      }
+
+      .entry-item {
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+      }
+
+      .entry-item-title {
+        font-size: 0.95em;
+        margin-bottom: 4px;
+      }
+
+      .entry-item-date {
+        font-size: 0.8em;
+      }
+
+      .entry-item-btn {
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .entry-item-btn button {
+        padding: 8px 10px;
+        font-size: 0.8em;
+        min-height: 40px;
+      }
+
+      .divider {
+        margin: 25px 0;
+      }
+    }
+
+    @media(max-width:480px) {
+      html { font-size: 13px; }
+      .container {
+        padding: 16px 10px;
+      }
+
+      .neon-title {
+        font-size: 1.4em;
+      }
+
+      .main-grid {
+        gap: 20px;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .stat-card {
+        padding: 12px;
+      }
+
+      .stat-number {
+        font-size: 1.4em;
+      }
+
+      .stat-label {
+        font-size: 0.75em;
+      }
+
+      .actions-section {
+        padding: 16px;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+      }
+
+      .action-buttons button {
+        width: 100%;
+        min-width: auto;
+      }
+
+      .form-section,
+      .entries-section {
+        padding: 16px;
+      }
+
+      textarea {
+        min-height: 90px;
+      }
+
+      button {
+        width: 100%;
+        padding: 12px 0;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+
+      .btn-danger {
+        flex: 1;
+      }
+
+      .entries-section {
+        max-height: 280px;
+      }
+    }
+
+    @media(max-width:360px) {
+      html { font-size: 12px; }
+
+      .neon-title {
+        font-size: 1.3em;
+      }
+
+      .container {
+        padding: 14px 8px;
+      }
+
+      input[type="text"],
+      input[type="date"],
+      input[type="url"],
+      textarea {
+        font-size: 16px;
+      }
+    }
+
+    .empty-text {
+      color: var(--muted);
+      text-align: center;
+      padding: 40px 20px;
+      opacity: 0.7;
+    }
+
+    .scroll-hint {
+      color: var(--muted);
+      font-size: 0.85em;
+      text-align: center;
+      padding: 10px;
+      opacity: 0.5;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  
+  <div class="container">
+    <header>
+      <h1 class="neon-title">📔 DIARY<span class="admin-badge">⚙️ Admin</span></h1>
+      <p class="subtitle">Panel editjaran untuk mengelola diary Anda</p>
+    </header>
+
+    <div class="alert success" id="successAlert"></div>
+    <div class="alert error" id="errorAlert"></div>
+
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <p class="stat-number" id="totalEntries">0</p>
+        <p class="stat-label">Total Entries</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-number" id="totalWords">0</p>
+        <p class="stat-label">Total Words</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-number" id="latestDate">--</p>
+        <p class="stat-label">Latest Entry</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-number" id="entriesThisMonth">0</p>
+        <p class="stat-label">This Month</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="actions-section">
+      <h2 class="actions-title">📊 Aksi Cepat</h2>
+      <div class="action-buttons">
+        <button onclick="exportData()" title="Download semua entries sebagai JSON">📥 Export Data</button>
+        <button onclick="document.getElementById('importFile').click()" title="Upload JSON file - import kembalikan entries">📤 Import Data</button>
+        <button onclick="clearAllEntries()" title="Hapus SEMUA entries - TIDAK BISA DIBATALKAN" class="btn-danger">🗑️ Clear All</button>
+      </div>
+      <input type="file" id="importFile" style="display:none;" accept=".json" onchange="importData(event)">
+    </div>
+
+    <div class="main-grid">
+      <!-- FORM SECTION -->
+      <div class="form-section">
+        <h2 class="form-title">✍️ Buat/Edit Entry</h2>
+
+        <form id="entryForm" onsubmit="saveEntry(event)">
+          <div class="form-group">
+            <label for="title">📝 Judul</label>
+            <input type="text" id="title" placeholder="Masukkan judul" required>
+          </div>
+
+          <div class="form-group">
+            <label for="date">📅 Tanggal</label>
+            <input type="date" id="date" required>
+          </div>
+
+          <div class="form-group">
+            <label for="content">💭 Isi Diary</label>
+            <textarea id="content" placeholder="Tulis ceritamu di sini..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="audioUrl">🎵 URL Audio (Opsional)</label>
+            <input type="url" id="audioUrl" placeholder="https://example.com/audio.mp3">
+          </div>
+
+          <div class="button-group">
+            <button type="submit">💾 Simpan Entry</button>
+            <button type="button" onclick="clearForm()" class="btn-secondary">🔄 Reset Form</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ENTRIES LIST -->
+      <div class="entries-section">
+        <h2 class="entries-title">📚 Daftar Entries</h2>
+        <div id="entriesList">
+          <p class="empty-text">Belum ada entries. Mulai buat yang baru!</p>
+        </div>
+        <p class="scroll-hint">Klik entry untuk edit atau hapus</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const storageKey = 'diaryEntries_v1';
+    let diaryEntries = [];
+    let currentEditId = null;
+
+    // Set today's date as default
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('date').value = today;
+
+    // Load entries from localStorage
+    function loadEntries() {
+      try {
+        diaryEntries = JSON.parse(localStorage.getItem(storageKey)) || [];
+      } catch(e) {
+        console.error('Error loading entries:', e);
+        showAlert('Error loading entries', 'error');
+        diaryEntries = [];
+      }
+      renderEntries();
+      updateStats();
+    }
+
+    // Save entry
+    function saveEntry(e) {
+      e.preventDefault();
+      
+      const title = document.getElementById('title').value.trim();
+      const date = document.getElementById('date').value;
+      const content = document.getElementById('content').value.trim();
+      const audioUrl = document.getElementById('audioUrl').value.trim();
+
+      if (!title || !date || !content) {
+        showAlert('Mohon isi semua field yang wajib!', 'error');
+        return;
+      }
+
+      const entry = {
+        id: currentEditId || Date.now().toString(),
+        title,
+        date,
+        content,
+        audioUrl,
+        created: currentEditId ? 
+          diaryEntries.find(e => e.id === currentEditId)?.created : new Date().toISOString(),
+        updated: new Date().toISOString()
+      };
+
+      if (currentEditId) {
+        const idx = diaryEntries.findIndex(e => e.id === currentEditId);
+        if (idx !== -1) {
+          diaryEntries[idx] = entry;
+          showAlert('✅ Entry berhasil diupdate!', 'success');
+        }
+      } else {
+        diaryEntries.push(entry);
+        showAlert('✅ Entry berhasil disimpan!', 'success');
+      }
+
+      localStorage.setItem(storageKey, JSON.stringify(diaryEntries));
+      clearForm();
+      loadEntries();
+    }
+
+    // Delete entry
+    function deleteEntry(id) {
+      if (confirm('Yakin ingin menghapus entry ini?')) {
+        diaryEntries = diaryEntries.filter(e => e.id !== id);
+        localStorage.setItem(storageKey, JSON.stringify(diaryEntries));
+        showAlert('✅ Entry berhasil dihapus!', 'success');
+        clearForm();
+        loadEntries();
+      }
+    }
+
+    // Edit entry
+    function editEntry(id) {
+      const entry = diaryEntries.find(e => e.id === id);
+      if (entry) {
+        document.getElementById('title').value = entry.title;
+        document.getElementById('date').value = entry.date;
+        document.getElementById('content').value = entry.content;
+        document.getElementById('audioUrl').value = entry.audioUrl || '';
+        currentEditId = id;
+        document.getElementById('title').focus();
+        
+        // Highlight active entry
+        document.querySelectorAll('.entry-item').forEach(el => {
+          el.classList.remove('active');
+        });
+        document.querySelector(`[data-id="${id}"]`)?.classList.add('active');
+      }
+    }
+
+    // Clear form
+    function clearForm() {
+      document.getElementById('entryForm').reset();
+      document.getElementById('date').value = today;
+      currentEditId = null;
+      document.querySelectorAll('.entry-item').forEach(el => {
+        el.classList.remove('active');
+      });
+    }
+
+    // Render entries list
+    function renderEntries() {
+      const container = document.getElementById('entriesList');
+      
+      if (diaryEntries.length === 0) {
+        container.innerHTML = '<p class="empty-text">Belum ada entries. Mulai buat yang baru!</p>';
+        return;
+      }
+
+      const sorted = [...diaryEntries].sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      container.innerHTML = sorted.map(entry => {
+        const dateObj = new Date(entry.date);
+        const formattedDate = dateObj.toLocaleDateString('id-ID', {
+          month: 'short',
+          day: 'numeric'
+        });
+        
+        return `
+          <div class="entry-item" data-id="${entry.id}" onclick="editEntry('${entry.id}')">
+            <p class="entry-item-title">${escapeHtml(entry.title)}</p>
+            <p class="entry-item-date">${formattedDate}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Update stats
+    function updateStats() {
+      document.getElementById('totalEntries').textContent = diaryEntries.length;
+      
+      const totalWords = diaryEntries.reduce((sum, e) => {
+        return sum + e.content.split(/\s+/).filter(w => w.length > 0).length;
+      }, 0);
+      document.getElementById('totalWords').textContent = totalWords;
+
+      const now = new Date();
+      const thisMonth = diaryEntries.filter(e => {
+        const eDate = new Date(e.date);
+        return eDate.getFullYear() === now.getFullYear() && 
+               eDate.getMonth() === now.getMonth();
+      }).length;
+      document.getElementById('entriesThisMonth').textContent = thisMonth;
+
+      if (diaryEntries.length > 0) {
+        const latest = new Date(Math.max(...diaryEntries.map(e => new Date(e.date))));
+        document.getElementById('latestDate').textContent = latest.toLocaleDateString('id-ID', {
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+    }
+
+    // Export data
+    function exportData() {
+      const dataStr = JSON.stringify(diaryEntries, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `diary-backup-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      showAlert('✅ Data berhasil di-export!', 'success');
+    }
+
+    // Import data
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!Array.isArray(imported)) throw new Error('Invalid format');
+          
+          diaryEntries = imported;
+          localStorage.setItem(storageKey, JSON.stringify(diaryEntries));
+          showAlert('✅ Data berhasil di-import! ' + imported.length + ' entries loaded.', 'success');
+          loadEntries();
+        } catch(err) {
+          showAlert('❌ Error import data: ' + err.message, 'error');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    // Clear all
+    function clearAllEntries() {
+      if (confirm('⚠️ HATI-HATI! Ini akan menghapus SEMUA entries!') &&
+          confirm('Ini adalah peringatan terakhir. Lanjutkan?')) {
+        diaryEntries = [];
+        localStorage.setItem(storageKey, JSON.stringify(diaryEntries));
+        showAlert('✅ Semua entries berhasil dihapus!', 'success');
+        clearForm();
+        loadEntries();
+      }
+    }
+
+    // Show alert
+    function showAlert(message, type) {
+      const alert = document.getElementById(type + 'Alert');
+      alert.textContent = message;
+      alert.classList.add('show');
+      setTimeout(() => {
+        alert.classList.remove('show');
+      }, 4000);
+    }
+
+    // Helper function
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // ===== NEON BACKGROUND PARTICLES =====
+    (function(){
+      const canvas = document.getElementById('bgCanvas');
+      if(!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let W = 0, H = 0;
+      
+      function resize(){
+        W = canvas.width = innerWidth;
+        H = canvas.height = innerHeight;
+      }
+      
+      window.addEventListener('resize', resize);
+      resize();
+
+      const colors = ['#00e5ff','#ff00d0','#66fff0','#ff7ae8'];
+      const parts = [];
+      
+      class Particle {
+        constructor(){
+          this.reset(true);
+        }
+        
+        reset(init){
+          this.x = Math.random() * W;
+          this.y = Math.random() * H;
+          const dir = Math.random() * Math.PI * 2;
+          const speed = 0.2 + Math.random() * 0.6;
+          this.vx = Math.cos(dir) * speed;
+          this.vy = Math.sin(dir) * speed;
+          this.r = 2 + Math.random() * 8;
+          this.c = colors[Math.floor(Math.random() * colors.length)];
+          
+          if(!init){
+            if(Math.random() < 0.3){
+              this.x = Math.random() < 0.5 ? -50 : W + 50;
+            }
+            if(Math.random() < 0.3){
+              this.y = Math.random() < 0.5 ? -50 : H + 50;
+            }
+          }
+        }
+        
+        update(){
+          this.x += this.vx;
+          this.y += this.vy;
+          if(this.x < -80 || this.x > W + 80 || this.y < -80 || this.y > H + 80){
+            this.reset(false);
+          }
+        }
+        
+        draw(){
+          const grad = ctx.createRadialGradient(
+            this.x, this.y, 0,
+            this.x, this.y, this.r * 8
+          );
+          grad.addColorStop(0, this.c);
+          grad.addColorStop(0.18, this.c + '66');
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+          
+          ctx.fillStyle = grad;
+          ctx.fillRect(
+            this.x - this.r * 8,
+            this.y - this.r * 8,
+            this.r * 16,
+            this.r * 16
+          );
+        }
+      }
+
+      function initParticles(){
+        parts.length = 0;
+        const total = Math.max(40, Math.min(120, Math.floor((W * H) / 40000)));
+        for(let i = 0; i < total; i++){
+          parts.push(new Particle());
+        }
+      }
+
+      initParticles();
+
+      let mx = -9999, my = -9999;
+      window.addEventListener('mousemove', (e) => {
+        mx = e.clientX;
+        my = e.clientY;
+      });
+
+      function frame(){
+        ctx.clearRect(0, 0, W, H);
+        ctx.globalCompositeOperation = 'lighter';
+        
+        for(const p of parts){
+          if(mx > -1000){
+            const dx = (mx - p.x) * 0.0004;
+            const dy = (my - p.y) * 0.0004;
+            p.vx += dx;
+            p.vy += dy;
+          }
+          
+          p.vx *= 0.995;
+          p.vy *= 0.995;
+          p.update();
+          p.draw();
+        }
+        
+        ctx.globalCompositeOperation = 'source-over';
+        requestAnimationFrame(frame);
+      }
+      
+      frame();
+      
+      let reInitTimer;
+      window.addEventListener('resize', () => {
+        clearTimeout(reInitTimer);
+        reInitTimer = setTimeout(() => {
+          initParticles();
+        }, 250);
+      });
+    })();
+
+    // Initialize
+    loadEntries();
+    console.log('✅ Diary Admin Panel Loaded');
+  </script>
+</body>
+</html>
